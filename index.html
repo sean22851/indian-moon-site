@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Indian Moon — artist management and services. Johnny Stimson, The Acoustic Room, David Dunn.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Indian Moon">
+<meta property="og:title" content="Indian Moon">
+<meta property="og:description" content="Artist management and services.">
+<meta property="og:url" content="https://www.indian-moon.com/">
+<meta property="og:image" content="https://www.indian-moon.com/photos/johnny-stimson.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cmask id='m'%3E%3Crect width='24' height='24' fill='white'/%3E%3Ccircle cx='14.2' cy='10.4' r='9.2' fill='black'/%3E%3C/mask%3E%3Ccircle cx='12' cy='12' r='9.5' fill='%23e8d6a8' mask='url(%23m)'/%3E%3C/svg%3E">
+<title>Indian Moon</title>
+<meta name="facebook-domain-verification" content="lh0s0zr1vuy069g8zag19iy1jamh52">
+<meta name="google-site-verification" content="Jdg1D5CfzpbHOggp2CrxaGX6xAjhpCNsFT3-3idSHoE">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,200;125,600&family=Outfit:wght@300;400;500&display=swap">
+<style>
+  /* Layout: one full-screen stage. Each artist's photo fills it; the roster revolves with a slow crossfade and drift.
+     Brand top-left, contact top-right, name + link bottom-left, counter + controls bottom-right. Single dark world. */
+  :root {
+    --bg: #07080a;
+    --fg: #f3f1ec;
+    --dim: rgba(243,241,236,.62);
+    --line: rgba(243,241,236,.18);
+    --glass: rgba(243,241,236,.08);
+    --glass-hi: rgba(243,241,236,.16);
+    --accent: #e8d6a8;
+    --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --body: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --dur: 7000ms;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--body);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 999px; }
+
+  .stage {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* photos */
+  .slides { position: absolute; inset: 0; z-index: 0; }
+  .slide {
+    position: absolute; inset: 0;
+    opacity: 0;
+    transition: opacity 1400ms cubic-bezier(.4,0,.2,1);
+  }
+  .slide img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    max-width: 100%;
+    object-fit: cover;
+    transform: scale(1.04);
+    transition: transform 9000ms linear;
+    filter: saturate(.92);
+  }
+  .slide.is-active { opacity: 1; z-index: 1; }
+  .slide.is-active img { transform: scale(1.12); }
+  .slide.is-leaving { z-index: 0; }
+
+  .veil {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background:
+      linear-gradient(to top, rgba(7,8,10,.92) 0%, rgba(7,8,10,.45) 32%, rgba(7,8,10,0) 62%),
+      linear-gradient(to bottom, rgba(7,8,10,.55) 0%, rgba(7,8,10,0) 28%);
+  }
+  .grain {
+    position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: .5;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .06 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+  }
+
+  /* chrome */
+  .ui {
+    position: absolute; inset: 0; z-index: 4;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding-block: max(22px, env(safe-area-inset-top, 0px)) max(22px, env(safe-area-inset-bottom, 0px));
+    padding-left: max(22px, env(safe-area-inset-left, 0px));
+    padding-right: max(22px, env(safe-area-inset-right, 0px));
+    pointer-events: none;
+  }
+  .ui > * { pointer-events: auto; }
+
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .brand { display: grid; gap: 8px; justify-items: start; }
+  .mark { display: inline-flex; align-items: center; gap: 7px; }
+  .mark svg { width: 20px; height: 20px; display: block; color: var(--accent); }
+  .word {
+    font-family: var(--display); font-stretch: 125%;
+    font-size: 17px; font-weight: 200; letter-spacing: .16em; text-transform: uppercase; line-height: 1;
+    white-space: nowrap;
+  }
+  .word b { font-weight: 600; color: var(--accent); }
+  .word { color: var(--fg); }
+  .brand small {
+    font-family: var(--body); font-weight: 400; font-size: 11px; letter-spacing: .24em;
+    text-transform: uppercase; color: var(--dim); white-space: nowrap;
+  }
+
+  .contact {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 11px 16px 11px 18px;
+    border-radius: 999px;
+    background: var(--glass);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    font-size: 12px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase;
+    transition: background .25s, border-color .25s, transform .25s;
+  }
+  .contact .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(232,214,168,.6); animation: pulse 2.4s infinite; }
+  .contact .arrow { transition: transform .25s; }
+  .contact:hover { background: var(--glass-hi); border-color: var(--accent); transform: translateY(-1px); }
+  .contact:hover .arrow { transform: translate(2px,-2px); }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(232,214,168,.55); } 70% { box-shadow: 0 0 0 8px rgba(232,214,168,0); } 100% { box-shadow: 0 0 0 0 rgba(232,214,168,0); } }
+
+  .bottom {
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 24px;
+  }
+  .who { min-width: 0; display: grid; gap: 10px; }
+  .eyebrow { font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: var(--dim); }
+  .name {
+    font-family: var(--display);
+    font-weight: 200;
+    font-stretch: 125%;
+    font-size: clamp(36px, 7.6vw, 104px);
+    line-height: .96;
+    letter-spacing: -.005em;
+    text-transform: uppercase;
+    margin: 0;
+    text-wrap: balance;
+    overflow: hidden;
+  }
+  .name span { display: inline-block; }
+  .name .it { font-weight: 600; }
+  .visit {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim);
+    width: max-content; padding-bottom: 4px;
+    border-bottom: 1px solid var(--line);
+    transition: color .25s, border-color .25s;
+  }
+  .visit:hover { color: var(--fg); border-color: var(--accent); }
+  .visit .arrow { transition: transform .25s; }
+  .visit:hover .arrow { transform: translateX(4px); }
+
+  /* enter animation per slide change */
+  .who.is-switching .name span, .who.is-switching .visit, .who.is-switching .eyebrow { animation: rise .9s cubic-bezier(.2,.7,.2,1) both; }
+  .who.is-switching .visit { animation-delay: .12s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+  .ctl { display: grid; gap: 14px; justify-items: end; flex-shrink: 0; }
+  .count { font-variant-numeric: tabular-nums; font-size: 12px; letter-spacing: .2em; color: var(--dim); }
+  .count b { color: var(--fg); font-weight: 500; }
+  .nav { display: flex; gap: 8px; }
+  .nav button {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--glass); border: 1px solid var(--line);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    display: grid; place-items: center; cursor: pointer;
+    transition: background .25s, border-color .25s;
+  }
+  .nav button:hover { background: var(--glass-hi); border-color: var(--accent); }
+  .bars { display: flex; gap: 6px; }
+  .bar { width: 44px; height: 2px; background: var(--line); border-radius: 2px; overflow: hidden; cursor: pointer; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); }
+  .bar.is-done i { width: 100%; }
+  .bar.is-active i { animation: fill var(--dur) linear both; }
+  .stage.is-paused .bar.is-active i { animation-play-state: paused; }
+  @keyframes fill { from { width: 0; } to { width: 100%; } }
+
+  @media (max-width: 640px) {
+    .mark svg { width: 17px; height: 17px; }
+    .word { font-size: 14px; }
+    .brand small { font-size: 9px; letter-spacing: .2em; }
+    .contact { padding: 10px 14px; font-size: 11px; }
+    .bottom { flex-direction: column; align-items: stretch; gap: 20px; }
+    .ctl { grid-template-columns: auto 1fr auto; grid-template-areas: "count bars nav"; align-items: center; justify-items: start; gap: 12px; }
+    .count { grid-area: count; }
+    .bars { grid-area: bars; }
+    .nav { grid-area: nav; }
+    .bar { width: 28px; }
+    .nav button { width: 40px; height: 40px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slide { transition: opacity 300ms; }
+    .slide img, .slide.is-active img { transform: none; transition: none; }
+    .who.is-switching * { animation: none !important; }
+    .contact .dot { animation: none; }
+  }
+</style>
+<style>html{color-scheme:dark}img{max-width:100%}</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <div class="slides" id="slides">
+    <div class="slide" data-i="0"><img src="photos/johnny-stimson.jpg" alt="Johnny Stimson" loading="eager"></div>
+    <div class="slide" data-i="1"><img src="photos/acoustic-room.jpg" alt="The Acoustic Room" loading="eager"></div>
+    <div class="slide" data-i="2"><img src="photos/david-dunn.jpg" alt="David Dunn" loading="eager"></div>
+  </div>
+  <div class="veil"></div>
+  <div class="grain"></div>
+
+  <div class="ui">
+    <div class="top">
+      <a class="brand" href="#top" aria-label="Indian Moon"><span class="mark"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="crescent"><rect width="24" height="24" fill="white"/><circle cx="14.2" cy="10.4" r="9.2" fill="black"/></mask></defs><circle cx="12" cy="12" r="9.5" fill="currentColor" mask="url(#crescent)"/></svg><span class="word">Indian <b>Moon</b></span></span><small>Artist Management / Services</small></a>
+      <a class="contact" href="mailto:sean@indian-moon.com" id="contact">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Get in touch</span>
+        <svg class="arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 9.5 9.5 2.5M4 2.5h5.5V8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+
+    <div></div>
+
+    <div class="bottom">
+      <div class="who" id="who" aria-live="polite">
+        <div class="eyebrow" id="eyebrow">Roster</div>
+        <h1 class="name" id="name"></h1>
+        <a class="visit" id="visit" target="_blank" rel="noopener">
+          <span id="visitLabel"></span>
+          <svg class="arrow" width="18" height="12" viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6h15M11 1l5 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+
+      <div class="ctl">
+        <div class="count"><b id="cur">01</b> / <span id="tot">03</span></div>
+        <div class="bars" id="bars" role="tablist" aria-label="Artists"></div>
+        <div class="nav">
+          <button type="button" id="prev" aria-label="Previous artist"><svg width="16" height="12" viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M17 6H2M7 1 2 6l5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button type="button" id="next" aria-label="Next artist"><svg width="16" height="12" viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6h15M11 1l5 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var artists = [
+      { name: ["Johnny", "Stimson"], url: "https://johnnystimson.com", label: "johnnystimson.com" },
+      { name: ["The Acoustic", "Room"], url: "https://www.youtube.com/theacousticroom", label: "Watch on YouTube" },
+      { name: ["David", "Dunn"], url: "http://daviddunnmusic.com", label: "daviddunnmusic.com" }
+    ];
+    var DUR = 7000;
+    var stage = document.getElementById('stage');
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    var who = document.getElementById('who');
+    var nameEl = document.getElementById('name');
+    var visit = document.getElementById('visit');
+    var visitLabel = document.getElementById('visitLabel');
+    var cur = document.getElementById('cur');
+    var bars = document.getElementById('bars');
+    var i = 0, timer = null, paused = false;
+
+    artists.forEach(function (_, k) {
+      var b = document.createElement('button');
+      b.className = 'bar'; b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-label', artists[k].name.join(' '));
+      b.style.cssText = 'padding:0;border:0;';
+      b.innerHTML = '<i></i>';
+      b.addEventListener('click', function () { go(k); });
+      bars.appendChild(b);
+    });
+    var barEls = Array.prototype.slice.call(bars.children);
+
+    function render(k, animate) {
+      slides.forEach(function (s, j) {
+        s.classList.toggle('is-leaving', s.classList.contains('is-active') && j !== k);
+        s.classList.toggle('is-active', j === k);
+      });
+      // Force a fresh drift on the incoming image
+      var img = slides[k].querySelector('img');
+      img.style.transition = 'none'; img.style.transform = 'scale(1.04)';
+      void img.offsetWidth;
+      img.style.transition = ''; img.style.transform = '';
+
+      nameEl.innerHTML = '<span>' + artists[k].name[0] + '</span> <span class="it">' + artists[k].name[1] + '</span>';
+      visit.href = artists[k].url;
+      visitLabel.textContent = artists[k].label;
+      cur.textContent = String(k + 1).padStart(2, '0');
+      barEls.forEach(function (b, j) {
+        b.classList.toggle('is-done', j < k);
+        b.classList.remove('is-active'); void b.offsetWidth;
+        b.classList.toggle('is-active', j === k);
+        b.setAttribute('aria-selected', j === k ? 'true' : 'false');
+      });
+      if (animate) { who.classList.remove('is-switching'); void who.offsetWidth; who.classList.add('is-switching'); }
+    }
+
+    function schedule() {
+      clearTimeout(timer);
+      if (document.hidden) return;
+      timer = setTimeout(function () { go(i + 1); }, DUR);
+    }
+    function go(k) {
+      i = (k + artists.length) % artists.length;
+      render(i, true);
+      if (!paused) schedule();
+    }
+
+    document.getElementById('next').addEventListener('click', function () { go(i + 1); });
+    document.getElementById('prev').addEventListener('click', function () { go(i - 1); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') go(i + 1);
+      if (e.key === 'ArrowLeft') go(i - 1);
+    });
+
+    // Pause while hovering the name/link so people can click; resume on leave.
+    var hoverTargets = [who, document.getElementById('contact')];
+    hoverTargets.forEach(function (el) {
+      el.addEventListener('mouseenter', function () { paused = true; stage.classList.add('is-paused'); clearTimeout(timer); });
+      el.addEventListener('mouseleave', function () { paused = false; stage.classList.remove('is-paused'); schedule(); });
+    });
+    document.addEventListener('visibilitychange', function () { if (document.hidden) clearTimeout(timer); else if (!paused) schedule(); });
+
+    // Touch swipe
+    var x0 = null;
+    stage.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+    stage.addEventListener('touchend', function (e) {
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if (Math.abs(dx) > 40) go(dx < 0 ? i + 1 : i - 1);
+    }, { passive: true });
+
+    render(0, false);
+    schedule();
+  })();
+</script>
+
+</body>
+</html>
